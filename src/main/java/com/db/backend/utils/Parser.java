@@ -17,6 +17,15 @@ public class Parser {
         return ByteBuffer.allocate(Short.SIZE / Byte.SIZE).putShort(value).array();
     }
 
+    public static byte[] int2Byte(int value) {
+        return ByteBuffer.allocate(Integer.SIZE / Byte.SIZE).putInt(value).array();
+    }
+
+    public static int parseInt(byte[] buf) {
+        ByteBuffer buffer = ByteBuffer.wrap(buf, 0, 4);
+        return buffer.getInt();
+    }
+
     public static short parseShort(byte[] buf) {
         ByteBuffer buffer = ByteBuffer.wrap(buf, 0, 2);
         return buffer.getShort();

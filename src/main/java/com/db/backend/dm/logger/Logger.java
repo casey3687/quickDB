@@ -1,28 +1,24 @@
-package com.db.backend.dm.pagecache;
+package com.db.backend.dm.logger;
 
+import com.db.backend.utils.Panic;
+import com.db.backend.utils.Parser;
+import com.db.common.Error;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import com.db.common.Error;
-import com.db.backend.dm.page.Page;
-import com.db.backend.utils.Panic;
 
-public interface PageCache {
-    
-    int PAGE_SIZE = 1 << 13;
-
-    int newPage(byte[] initData);
-    Page getPage(int pgno) throws Exception;
+public interface Logger {
+    void log(byte[] data);
+    void truncate(long x) throws Exception;
+    byte[] next();
+    void rewind();
     void close();
-    void release(Page page);
 
-    void truncateByBgno(int maxPgno);
-    int getPageNumber();
-    void flushPage(Page pg);
-
-    public static PageCacheImpl create(String path, long memory) {
-        File f = new File(path+PageCacheImpl.DB_SUFFIX);
+    public static Logger create(String path) {
+        File f = new File(path+LoggerImpl.LOG_SUFFIX);
         try {
             if(!f.createNewFile()) {
                 Panic.panic(Error.FileExistsException);
@@ -42,11 +38,21 @@ public interface PageCache {
         } catch (FileNotFoundException e) {
            Panic.panic(e);
         }
-        return new PageCacheImpl(raf, fc, (int)memory/PAGE_SIZE);
+
+        ByteBuffer buf = ByteBuffer.wrap(Parser.int2Byte(0));
+        try {
+            fc.position(0);
+            fc.write(buf);
+            fc.force(false);
+        } catch (IOException e) {
+            Panic.panic(e);
+        }
+
+        return new LoggerImpl(raf, fc, 0);
     }
 
-    public static PageCacheImpl open(String path, long memory) {
-        File f = new File(path+PageCacheImpl.DB_SUFFIX);
+    public static Logger open(String path) {
+        File f = new File(path+LoggerImpl.LOG_SUFFIX);
         if(!f.exists()) {
             Panic.panic(Error.FileNotExistsException);
         }
@@ -62,6 +68,10 @@ public interface PageCache {
         } catch (FileNotFoundException e) {
            Panic.panic(e);
         }
-        return new PageCacheImpl(raf, fc, (int)memory/PAGE_SIZE);
+
+        LoggerImpl lg = new LoggerImpl(raf, fc);
+        lg.init();
+
+        return lg;
     }
 }
