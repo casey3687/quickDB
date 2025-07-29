@@ -23,7 +23,7 @@ public class TransactionManagerTest {
     private CountDownLatch cdl;
 
     @Test
-    public void testMultiThread() {
+    public void testMultiThread() throws Exception {
         tmger = TransactionManager.create("/tmp/tranmger_test");
         transMap = new ConcurrentHashMap<>();
         cdl = new CountDownLatch(noWorkers);
