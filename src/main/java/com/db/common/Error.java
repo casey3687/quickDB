@@ -10,4 +10,5 @@ public class Error {
     public static final Exception DatabaseBusyException = new RuntimeException("Database is busy!");
     public static final Exception BadXIDFileException = new RuntimeException("Bad XID file!");
     public static final Exception BadLogFileException = new RuntimeException("Bad log file!");
+    public static final Exception NullEntryException = new RuntimeException("Null entry!");
 }
