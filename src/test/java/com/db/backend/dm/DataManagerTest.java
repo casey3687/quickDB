@@ -154,7 +154,7 @@ public class DataManagerTest {
             for(int k = 0; k < workerNums; k ++) {
                 final DataManager dm = dm0;
                 Runnable r = () -> worker(dm, mdm, 100, 50, cdl);
-                new Thread(r).run();
+                new Thread(r).start();
             }
             cdl.await();
         }

@@ -28,8 +28,8 @@ public class TransactionManagerTest {
         transMap = new ConcurrentHashMap<>();
         cdl = new CountDownLatch(noWorkers);
         for(int i = 0; i < noWorkers; i ++) {
-            Runnable r = () -> worker();
-            new Thread(r).run();
+            Runnable r = this::worker;
+            new Thread(r).start();
         }
         try {
             cdl.await();
@@ -46,7 +46,7 @@ public class TransactionManagerTest {
             int op = Math.abs(random.nextInt(6));
             if(op == 0) {
                 lock.lock();
-                if(inTrans == false) {
+                if(!inTrans) {
                     long xid = tmger.begin();
                     transMap.put(xid, (byte)0);
                     transCnt ++;
