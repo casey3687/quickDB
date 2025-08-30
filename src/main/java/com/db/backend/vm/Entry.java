@@ -5,6 +5,7 @@ import com.db.backend.common.SubArray;
 import com.db.backend.dm.dataItem.DataItem;
 import com.db.backend.utils.Parser;
 
+import java.util.Arrays;
 
 /**
  * VM向上层抽象出entry
@@ -61,6 +62,36 @@ public class Entry {
             return data;
         } finally {
             dataItem.rUnLock();
+        }
+    }
+
+    public long getXmin() {
+        dataItem.rLock();
+        try {
+            SubArray sa = dataItem.data();
+            return Parser.parseLong(Arrays.copyOfRange(sa.raw, sa.start+OF_XMIN, sa.start+OF_XMAX));
+        } finally {
+            dataItem.rUnLock();
+        }
+    }
+
+    public long getXmax() {
+        dataItem.rLock();
+        try {
+            SubArray sa = dataItem.data();
+            return Parser.parseLong(Arrays.copyOfRange(sa.raw, sa.start+OF_XMAX, sa.start+OF_DATA));
+        } finally {
+            dataItem.rUnLock();
+        }
+    }
+
+    public void setXmax(long xid) {
+        dataItem.before();
+        try {
+            SubArray sa = dataItem.data();
+            System.arraycopy(Parser.long2Byte(xid), 0, sa.raw, sa.start+OF_XMAX, 8);
+        } finally {
+            dataItem.after(xid);
         }
     }
 

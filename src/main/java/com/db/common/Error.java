@@ -11,4 +11,5 @@ public class Error {
     public static final Exception BadXIDFileException = new RuntimeException("Bad XID file!");
     public static final Exception BadLogFileException = new RuntimeException("Bad log file!");
     public static final Exception NullEntryException = new RuntimeException("Null entry!");
+    public static final Exception DeadlockException = new RuntimeException("Deadlock!");
 }

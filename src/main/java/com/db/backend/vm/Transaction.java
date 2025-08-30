@@ -1,5 +1,6 @@
 package com.db.backend.vm;
 
+import com.db.backend.tm.TransactionManagerImpl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,4 +26,10 @@ public class Transaction {
         return t;
     }
 
+    public boolean isInSnapshot(long xid) {
+        if(xid == TransactionManagerImpl.SUPER_XID) {
+            return false;
+        }
+        return snapshot.containsKey(xid);
+    }
 }
