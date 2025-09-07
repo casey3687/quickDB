@@ -1,6 +1,9 @@
 package com.db.backend.utils;
 
+import com.google.common.primitives.Bytes;
+
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class Parser {
 
@@ -29,5 +32,25 @@ public class Parser {
     public static short parseShort(byte[] buf) {
         ByteBuffer buffer = ByteBuffer.wrap(buf, 0, 2);
         return buffer.getShort();
+    }
+
+    public static ParseStringRes parseString(byte[] raw) {
+        int length = parseInt(Arrays.copyOf(raw, 4));
+        String str = new String(Arrays.copyOfRange(raw, 4, 4 + length));
+        return new ParseStringRes(str, length + 4);
+    }
+
+    public static byte[] string2Byte(String str) {
+        byte[] l = int2Byte(str.length());
+        return Bytes.concat(l, str.getBytes());
+    }
+
+    public static long str2Uid(String key) {
+        long seed = 13331;
+        long res = 0;
+        for (byte b : key.getBytes()) {
+            res = res * seed + (long) b;
+        }
+        return res;
     }
 }
