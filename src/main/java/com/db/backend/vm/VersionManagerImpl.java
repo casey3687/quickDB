@@ -28,16 +28,40 @@ public class VersionManagerImpl extends AbstractCache<Entry> implements VersionM
     }
 
 
-    /** todo read
-     *
-     * @param xid
-     * @param uid
-     * @return
-     * @throws Exception
-     */
     @Override
     public byte[] read(long xid, long uid) throws Exception {
-        return new byte[0];
+        Transaction t;
+        lock.lock();
+        try {
+            t = activeTransaction.get(xid);
+        } finally {
+            lock.unlock();
+        }
+        if(t == null) {
+            return null;
+        }
+        if(t.err != null) {
+            throw t.err;
+        }
+
+        Entry entry;
+        try {
+            entry = super.get(uid);
+        } catch(Exception e) {
+            if(e == Error.NullEntryException) {
+                return null;
+            }
+            throw e;
+        }
+
+        try {
+            if(Visibility.isVisible(tm, t, entry)) {
+                return entry.data();
+            }
+            return null;
+        } finally {
+            entry.release();
+        }
     }
 
     @Override
@@ -54,16 +78,50 @@ public class VersionManagerImpl extends AbstractCache<Entry> implements VersionM
         return dm.insert(xid, raw);
     }
 
-    /**
-     *  todo delete
-     * @param xid
-     * @param uid
-     * @return
-     * @throws Exception
-     */
     @Override
     public boolean delete(long xid, long uid) throws Exception {
-        return true;
+        Transaction t;
+        lock.lock();
+        try {
+            t = activeTransaction.get(xid);
+        } finally {
+            lock.unlock();
+        }
+        if(t == null) {
+            return false;
+        }
+        if(t.err != null) {
+            throw t.err;
+        }
+
+        Entry entry;
+        try {
+            entry = super.get(uid);
+        } catch(Exception e) {
+            if(e == Error.NullEntryException) {
+                return false;
+            }
+            throw e;
+        }
+
+        try {
+            if(!Visibility.isVisible(tm, t, entry)) {
+                return false;
+            }
+            if(entry.getXmax() == xid) {
+                return false;
+            }
+            if(Visibility.isVersionSkip(tm, t, entry)) {
+                t.err = Error.ConcurrentUpdateException;
+                t.autoAborted = true;
+                internAbort(xid, true);
+                throw t.err;
+            }
+            entry.setXmax(xid);
+            return true;
+        } finally {
+            entry.release();
+        }
     }
 
     @Override

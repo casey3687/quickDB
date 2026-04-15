@@ -78,7 +78,7 @@ public class TableManagerImpl implements TableManager {
             }
             List<Table> t = xidTableCache.get(xid);
             if(t == null) {
-                return "\n".getBytes();
+                return sb.toString().getBytes();
             }
             for (Table tb : t) {
                 sb.append(tb.toString()).append("\n");
@@ -107,6 +107,24 @@ public class TableManagerImpl implements TableManager {
             lock.unlock();
         }
     }
+
+    @Override
+    public byte[] drop(long xid, Drop drop) throws Exception {
+        lock.lock();
+        try {
+            Table removed = tableCache.remove(drop.tableName);
+            if(removed == null) {
+                throw Error.TableNotFoundException;
+            }
+            for(List<Table> tables : xidTableCache.values()) {
+                tables.removeIf(tb -> drop.tableName.equals(tb.name));
+            }
+            return ("drop " + drop.tableName).getBytes();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public byte[] insert(long xid, Insert insert) throws Exception {
         lock.lock();
